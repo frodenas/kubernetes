@@ -31,13 +31,17 @@ func startDaemonSetController(ctx ControllerContext) (bool, error) {
 	if !ctx.AvailableResources[schema.GroupVersionResource{Group: "extensions", Version: "v1beta1", Resource: "daemonsets"}] {
 		return false, nil
 	}
-	go daemon.NewDaemonSetsController(
+	dsc, err := daemon.NewDaemonSetsController(
 		ctx.InformerFactory.Extensions().V1beta1().DaemonSets(),
 		ctx.InformerFactory.Apps().V1beta1().ControllerRevisions(),
 		ctx.InformerFactory.Core().V1().Pods(),
 		ctx.InformerFactory.Core().V1().Nodes(),
 		ctx.ClientBuilder.ClientOrDie("daemon-set-controller"),
-	).Run(int(ctx.Options.ConcurrentDaemonSetSyncs), ctx.Stop)
+	)
+	if err != nil {
+		return false, err
+	}
+	go dsc.Run(int(ctx.Options.ConcurrentDaemonSetSyncs), ctx.Stop)
 	return true, nil
 }
 
