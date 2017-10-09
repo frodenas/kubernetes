@@ -19,10 +19,14 @@ package app
 import "k8s.io/kubernetes/pkg/controller/bootstrap"
 
 func startBootstrapSignerController(ctx ControllerContext) (bool, error) {
-	go bootstrap.NewBootstrapSigner(
+	bsc, err := bootstrap.NewBootstrapSigner(
 		ctx.ClientBuilder.ClientGoClientOrDie("bootstrap-signer"),
 		bootstrap.DefaultBootstrapSignerOptions(),
-	).Run(ctx.Stop)
+	)
+	if err != nil {
+		return false, err
+	}
+	go bsc.Run(ctx.Stop)
 	return true, nil
 }
 
