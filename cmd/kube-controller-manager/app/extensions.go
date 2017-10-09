@@ -49,12 +49,16 @@ func startDeploymentController(ctx ControllerContext) (bool, error) {
 	if !ctx.AvailableResources[schema.GroupVersionResource{Group: "extensions", Version: "v1beta1", Resource: "deployments"}] {
 		return false, nil
 	}
-	go deployment.NewDeploymentController(
+	dc, err := deployment.NewDeploymentController(
 		ctx.InformerFactory.Extensions().V1beta1().Deployments(),
 		ctx.InformerFactory.Extensions().V1beta1().ReplicaSets(),
 		ctx.InformerFactory.Core().V1().Pods(),
 		ctx.ClientBuilder.ClientOrDie("deployment-controller"),
-	).Run(int(ctx.Options.ConcurrentDeploymentSyncs), ctx.Stop)
+	)
+	if err != nil {
+		return false, err
+	}
+	go dc.Run(int(ctx.Options.ConcurrentDeploymentSyncs), ctx.Stop)
 	return true, nil
 }
 
